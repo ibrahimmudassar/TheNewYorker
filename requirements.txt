@@ -1,0 +1,7 @@
+psycopg2
+requests
+discord_webhook
+environs
+requests
+colorthief
+selenium
