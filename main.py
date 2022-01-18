@@ -4,7 +4,7 @@ from datetime import datetime  # For time
 
 import psycopg2  # Heroku Database
 import requests  # Download image link
-from discord_webhook import DiscordEmbed, DiscordWebhook  # Connect to discord
+from discord_webhook import DiscordEmbed, DiscordWebhook  # connnect to discord
 from environs import Env  # For environment variables
 import requests  # Download image link
 from colorthief import ColorThief  # Find the dominant color
@@ -14,10 +14,13 @@ from selenium import webdriver  # Browser prereq
 env = Env()
 env.read_env()  # read .env file, if it exists
 
-# Connecting with the heroku database
+# connnecting with the heroku database
 DATABASE_URL = env('DATABASE_URL')
 
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+
+#  create a new cursor
+cur = conn.cursor()
 
 
 def embed_to_discord(date, image_url, caption):
@@ -73,6 +76,15 @@ def dominant_image_color(image_link):
     return hex
 
 
+def last_entry():
+    cur.execute("SELECT data FROM records")
+    answer = cur.fetchone()
+    if answer is None:
+        return None
+    else:
+        return ''.join(answer)
+
+
 # Create new Instance of Chrome
 chrome_options = webdriver.ChromeOptions()
 chrome_options.binary_location = env("GOOGLE_CHROME_BIN")
@@ -85,14 +97,20 @@ browser = webdriver.Chrome(executable_path=env(
 browser.get("https://www.newyorker.com/magazine")
 
 
-date = browser.find_element_by_css_selector(
-    "#app-root > div > main > section > div.Layout__layoutContainer___2gtig > header > div > h2").text
-image = browser.find_element_by_css_selector(
-    "#app-root > div > main > section > div.Layout__layoutContainer___2gtig > header > div > div.MagazineCover__cover___2bDZf > div > div > a > figure > div > div.placeholder-content > div > picture > img").get_attribute("src")
-caption = browser.find_element_by_css_selector(
-    "#app-root > div > main > section > div.Layout__layoutContainer___2gtig > header > div > div.MagazineCover__cover___2bDZf > div > div > a > figure > figcaption > span > p").text
+date = browser.find_element_by_xpath(
+    "/html/body/div[2]/div/main/section/div[2]/header/div/h2").text
+image = browser.find_element_by_xpath(
+    "/html/body/div[2]/div/main/section/div[2]/header/div/div[1]/div/div/a/figure/div/div[2]/div/picture/img").get_attribute("src")
+caption = browser.find_element_by_xpath(
+    "/html/body/div[2]/div/main/section/div[2]/header/div/div[1]/div/div/a/figure/figcaption/span/p").text
+
+if last_entry() != date or last_entry() == None:
+
+    embed_to_discord(date=date, image_url=image, caption=caption)
+    cur.execute(f"INSERT INTO records (data) VALUES ('{date}')")
 
 
-embed_to_discord(date=date, image_url=image, caption=caption)
+conn.commit()
+conn.close()
 
 browser.quit()
