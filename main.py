@@ -4,11 +4,12 @@ from datetime import datetime  # For time
 
 import psycopg2  # Heroku Database
 import requests  # Download image link
+from colorthief import ColorThief  # Find the dominant color
 from discord_webhook import DiscordEmbed, DiscordWebhook  # connnect to discord
 from environs import Env  # For environment variables
-import requests  # Download image link
-from colorthief import ColorThief  # Find the dominant color
 from selenium import webdriver  # Browser prereq
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
 
 # Setting up environment variables
 env = Env()
@@ -86,23 +87,23 @@ def last_entry():
 
 
 # Create new Instance of Chrome
-chrome_options = webdriver.ChromeOptions()
-chrome_options.binary_location = env("GOOGLE_CHROME_BIN")
-chrome_options.add_argument("--headless")
-chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("--no-sandbox")
+options = webdriver.ChromeOptions()
+options.binary_location = env("GOOGLE_CHROME_BIN")
+options.add_argument("--headless")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--no-sandbox")
 
-browser = webdriver.Chrome(executable_path=env(
-    'CHROMEDRIVER_PATH'), options=chrome_options)
+browser = webdriver.Chrome(service=Service(env(
+    'CHROMEDRIVER_PATH')), options=options)
 browser.get("https://www.newyorker.com/magazine")
 
 
-date = browser.find_element_by_xpath(
-    "/html/body/div[2]/div/main/section/div[2]/header/div/h2").text
-image = browser.find_element_by_xpath(
-    "/html/body/div[2]/div/main/section/div[2]/header/div/div[1]/div/div/a/figure/div/div[2]/div/picture/img").get_attribute("src")
-caption = browser.find_element_by_xpath(
-    "/html/body/div[2]/div/main/section/div[2]/header/div/div[1]/div/div/a/figure/figcaption/span/p").text
+date = browser.find_element(
+    By.XPATH, "/html/body/div[2]/div/main/section/div[2]/header/div/h2").text
+image = browser.find_element(
+    By.XPATH, "/html/body/div[2]/div/main/section/div[2]/header/div/div[1]/div/div/a/figure/div/div[2]/div/picture/img").get_attribute("src")
+caption = browser.find_element(
+    By.XPATH, "/html/body/div[2]/div/main/section/div[2]/header/div/div[1]/div/div/a/figure/figcaption/span/p").text
 
 if last_entry() != date or last_entry() == None:
 
