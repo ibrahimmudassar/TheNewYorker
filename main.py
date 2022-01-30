@@ -79,7 +79,7 @@ def dominant_image_color(image_link):
 
 def last_entry():
     cur.execute("SELECT data FROM records")
-    answer = cur.fetchone()
+    answer = cur.fetchall()[-1]
     if answer is None:
         return None
     else:
