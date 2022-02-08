@@ -4,4 +4,4 @@ discord_webhook
 environs
 requests
 colorthief
-selenium
+selenium>=4.1
